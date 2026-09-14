@@ -17,6 +17,13 @@ def xor_operation(data:bytes, iv:bytes) -> bytes:
     xor_bytes = xor_data.to_bytes(16)
     return xor_bytes
 
+def get_padding(file_size:int, blocks_read:int) -> bytes:
+    bytes_remaining = file_size - blocks_read * 16
+    pad_bytes_needed = 16 - (bytes_remaining % 16)
+    pad_byte = pad_bytes_needed.to_bytes(1, byteorder='big')
+    padding = pad_byte * pad_bytes_needed
+    return padding
+
 #Encrypt the given file using the ecb order.
 def encrypt_ecb(key:bytes, file:str = "cp-logo.bmp"):
     cipher = AES.new(key, AES.MODE_ECB)
@@ -43,12 +50,8 @@ def encrypt_ecb(key:bytes, file:str = "cp-logo.bmp"):
             #read remaining data
             padded_data = f.read(16)
             #get remaining bytes, and build the padding bytes
-            bytes_remaining = file_size - blocks_read * 16
-            pad_bytes_needed = 16 - (bytes_remaining % 16)
-            pad_byte = pad_bytes_needed.to_bytes(1, byteorder='big')
-            padding = pad_byte * pad_bytes_needed
             #add padding to remaining data
-            padded_data += padding
+            padded_data += get_padding(file_size, blocks_read)
             #encrypt and add to file
             encrypted_data = cipher.encrypt(padded_data)
             new_bmp += encrypted_data
@@ -92,12 +95,8 @@ def encrypt_cbc(key:bytes, file:str = "mustang.bmp"):
             #read remaining data
             padded_data = f.read(16)
             #get remaining bytes, and build the padding bytes
-            bytes_remaining = file_size - blocks_read * 16
-            pad_bytes_needed = 16 - (bytes_remaining % 16)
-            pad_byte = pad_bytes_needed.to_bytes(1, byteorder='big')
-            padding = pad_byte * pad_bytes_needed
             #add padding to remaining data
-            padded_data += padding
+            padded_data += get_padding(file_size, blocks_read)
             #encrypt and add to file
             xor_bytes = xor_operation(padded_data, previous_block)
             encrypted_data = cipher.encrypt(xor_bytes)
