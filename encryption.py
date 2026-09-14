@@ -58,9 +58,10 @@ def encrypt_ecb(key:bytes, file:str = "cp-logo.bmp"):
         f.write(new_bmp)
 
 
-#TODO: CBC cypher
+
 def encrypt_cbc(key:bytes, file:str = "mustang.bmp"):
     #still using ecb mode for this implementation of cbc
+    #this structure parallels that of encrypt_ecb() differences are highlighted with comments
     cipher = AES.new(key, AES.MODE_ECB)
     with open(file, "br") as f:
         f.seek(0, 2)
@@ -68,8 +69,11 @@ def encrypt_cbc(key:bytes, file:str = "mustang.bmp"):
         f.seek(0)
         new_bmp = f.read(54)
         data = f.read(16)
+        #an initialization vector is created to begin the xor operations
         init_vector = get_new_key(16)
+        #perform an xor operation on the 1st data chunk and the IV
         xor_bytes = xor_operation(data, init_vector)
+        #encrypt the xor'ed data
         encrypted_data = cipher.encrypt(xor_bytes)
         new_bmp += encrypted_data
         previous_block = encrypted_data
@@ -77,6 +81,8 @@ def encrypt_cbc(key:bytes, file:str = "mustang.bmp"):
         while file_size - blocks_read * 16 >= 16:
             blocks_read += 1
             data = f.read(16)
+            #before encrypting the data, an xor operation is first performed
+            #using the previous encrypted 16 byte chunk of data
             xor_bytes = xor_operation(data, previous_block)
             encrypted_data = cipher.encrypt(xor_bytes)
             previous_block = encrypted_data
